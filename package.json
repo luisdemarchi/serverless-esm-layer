@@ -1,6 +1,6 @@
 {
   "name": "serverless-esm-layer",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A serverless plugin that will fix the problem of AWS-Layers not working with ES Modules (ESM .mjs)",
   "engines": {
     "node": ">=14.x"
