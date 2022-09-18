@@ -1,0 +1,39 @@
+{
+  "name": "serverless-esm-layer",
+  "version": "1.0.0",
+  "description": "A serverless plugin that will fix the problem of AWS-Layers not working with ES Modules (ESM .mjs)",
+  "engines": {
+    "node": ">=14.x"
+  },
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "postversion": "git commit -m \"Bump package version to $npm_package_version\" package.json; git flow release start $npm_package_version; git flow release finish -m $npm_package_version $npm_package_version; git checkout develop; git merge master"
+  },
+  "keywords": [
+    "serverless",
+    "aws-layer",
+    "aws-lambda",
+    "esm",
+    "es-modules"
+  ],
+  "author": "Luís De Marchi <luis@luisdemarchi.com.br>",
+  "license": "BSD-3-Clause-Clear",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "archiver": "5.3.1",
+    "lnk": "^1.1.0",
+    "zip-lib": "0.7.3"
+  },
+  "devDependencies": {
+    "@hughescr/eslint-config-default": "2.8.7",
+    "eslint": "7.27.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "graceful-fs": "4.2.10"
+    }
+  }
+}
