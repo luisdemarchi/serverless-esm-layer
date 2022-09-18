@@ -5,6 +5,11 @@
   "engines": {
     "node": ">=14.x"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/luisdemarchi/serverless-esm-layer.git"
+  },
+  "issue": "https://github.com/luisdemarchi/serverless-esm-layer/issues",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
