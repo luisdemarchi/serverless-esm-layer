@@ -5,7 +5,7 @@ Serverless plugin to support AWS Layers using ES Module
 In early 2022, AWS released ES Module (`ESM .mjs`) support for the the Node.js 14.x Lambda Runtime and surprisingly, ESM support was released without "support" for `AWS Layers`. This plugin fixed the problem.
 
 > Note:
-> This plugin was based on the [vibe/aws-esm-layer-support repository](https://github.com/vibe/aws-esm-layer-support) that details the problem and shows the implemented solution.
+> This plugin was based on the [vibe/aws-esm-layer-support repository](https://github.com/vibe/aws-esm-modules-layer-support) that details the problem and shows the implemented solution.
 
 
 **Requirements:**
