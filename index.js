@@ -23,8 +23,9 @@ class EsmLayer {
     const dirPath = path.relative('./', '.serverless');
     const files = await fs.promises.readdir(dirPath);
     const zipFiles = files.filter(el => path.extname(el) === '.zip');
-    await fs.promises.mkdtemp(path.join(os.tmpdir(), 'ServerlessEsmLayer-'));
-    this.tmpDir = path.join(os.tmpdir(), 'ServerlessEsmLayer-');
+    const tempName = `ServerlessEsmLayer-${Math.random().toString(36).slice(2, 7)}`;
+    await fs.promises.mkdtemp(path.join(os.tmpdir(), tempName));
+    this.tmpDir = path.join(os.tmpdir(), tempName);
 
     zipFiles.forEach(async item => {
       try {
