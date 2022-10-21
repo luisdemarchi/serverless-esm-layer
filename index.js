@@ -18,6 +18,7 @@ class EsmLayer {
     };
   }
 
+
   async packageFinalize() {
     this.serverless.cli.log('Making adjustments to work the layer with esm (.mjs)');
     const dirPath = path.relative('./', '.serverless');
@@ -37,7 +38,7 @@ class EsmLayer {
       }
     });
 
-    await this.deleteDirTemp();
+    // await this.deleteDirTemp();
   }
 
   fullPath(filename) {
@@ -66,11 +67,12 @@ class EsmLayer {
     archive.glob('**/*',
       {
           cwd: this.fullPath(filename),
+          encoding: 'CodeSHA256',
           root: false,
-          nodir: true,
-          nosort: true,
-          dot: true,
-          follow: true
+          nodir: false,
+          nosort: false,
+          dot: false,
+          follow: false
       }
     );
     await archive.finalize();
