@@ -33,8 +33,8 @@ class EsmLayer {
     const jsonFiles = files.filter(el => path.extname(el) === '.json');
 
     jsonFiles.forEach(async filename => {
-      let rawdata = fs.readFileSync(`./.serverless/${filename}`);
-      let data = JSON.parse(rawdata);
+      const rawdata = fs.readFileSync(`./.serverless/${filename}`);
+      const data = JSON.parse(rawdata);
       if('Resources' in data) {
         // const lambdasVersion = data.Resources.filter(item => item.Type === 'AWS::Lambda::Version');
         const keys = Object
@@ -59,17 +59,16 @@ class EsmLayer {
     await fs.promises.mkdtemp(path.join(os.tmpdir(), tempName));
     this.tmpDir = path.join(os.tmpdir(), tempName);
 
-    zipFiles.forEach(async item => {
+    for await (const fileName of zipFiles) {
       try {
-        await this.unzip(item);
-        await this.symlink(item);
-        await this.zip(item);
+        await this.unzip(fileName);
+        await this.symlink(fileName);
+        await this.zip(fileName);
+        await this.getCodeSha256(fileName);
       } catch(error) {
         this.serverless.cli.log(`layer with esm - error: ${error}`);
       }
-    });
-
-    // await this.deleteDirTemp();
+    }
   }
 
   fullPath(filename) {
@@ -104,19 +103,21 @@ class EsmLayer {
       }
     );
     await archive.finalize();
-    await this.getCodeSha256(filename);
   }
 
   async getCodeSha256(filename) {
     const filePath = `./.serverless/${filename}`;
     const shasum = crypto.createHash('sha256');
-    await fs.createReadStream(filePath)
-    .on('data', (chunk) => {
-        shasum.update(chunk);
-    })
-    .on('end', () => {
-        const sha256 = shasum.digest('base64');
-        console.log(filename, '<->', sha256);
+    return new Promise((resolve) => {
+      fs.createReadStream(filePath)
+        .on('data', (chunk) => {
+            shasum.update(chunk);
+        })
+        .on('end', () => {
+            const sha256 = shasum.digest('base64');
+            console.log(filename, '<->', sha256);
+            resolve();
+        });
     });
   }
 
