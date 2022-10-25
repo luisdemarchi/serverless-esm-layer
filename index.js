@@ -4,6 +4,7 @@
 const os = require('os');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 const zl = require('zip-lib');
 const lnk = require('lnk');
@@ -14,7 +15,9 @@ class EsmLayer {
     this.serverless = serverless;
 
     this.hooks = {
-      'after:package:createDeploymentArtifacts':  () => this.packageFinalize(),
+      'after:package:createDeploymentArtifacts': async () => {
+        await this.packageFinalize();
+      },
     };
   }
 
@@ -27,17 +30,15 @@ class EsmLayer {
     await fs.promises.mkdtemp(path.join(os.tmpdir(), tempName));
     this.tmpDir = path.join(os.tmpdir(), tempName);
 
-    zipFiles.forEach(async item => {
+    for await (const fileName of zipFiles) {
       try {
-        await this.unzip(item);
-        await this.symlink(item);
-        await this.zip(item);
+        await this.unzip(fileName);
+        await this.symlink(fileName);
+        await this.zip(fileName);
       } catch(error) {
         this.serverless.cli.log(`layer with esm - error: ${error}`);
       }
-    });
-
-    await this.deleteDirTemp();
+    }
   }
 
   fullPath(filename) {
@@ -56,8 +57,6 @@ class EsmLayer {
   }
 
   async zip(filename) {
-    // The zip-lib is not generating the zip with symlink.
-    // issue https://github.com/fpsqdb/zip-lib/issues/7
     const output = fs.createWriteStream(`./.serverless/${filename}`);
     const archive = archiver('zip', {
       zlib: { level: 9 }
@@ -67,14 +66,15 @@ class EsmLayer {
       {
           cwd: this.fullPath(filename),
           root: false,
-          nodir: true,
-          nosort: true,
-          dot: true,
-          follow: true
+          nodir: false,
+          nosort: false,
+          dot: false,
+          follow: false
       }
     );
     await archive.finalize();
   }
+
 
   async deleteDirTemp() {
     return fs.promises.rm(this.tmpDir, { recursive: true, force: true });
