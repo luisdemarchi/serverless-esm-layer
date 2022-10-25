@@ -4,6 +4,7 @@
 const os = require('os');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 const zl = require('zip-lib');
 const lnk = require('lnk');
@@ -15,8 +16,30 @@ class EsmLayer {
 
     this.hooks = {
       'after:package:createDeploymentArtifacts':  () => this.packageFinalize(),
+      'after:package:finalize':  () => this.listJSON(),
     };
   }
+  async listJSON() {
+    const dirPath = path.relative('./', '.serverless');
+    const files = await fs.promises.readdir(dirPath);
+    const jsonFiles = files.filter(el => path.extname(el) === '.json');
+
+    jsonFiles.forEach(async filename => {
+      let rawdata = fs.readFileSync(`./.serverless/${filename}`);
+      let data = JSON.parse(rawdata);
+      if('Resources' in data) {
+        // const lambdasVersion = data.Resources.filter(item => item.Type === 'AWS::Lambda::Version');
+        const keys = Object
+            .keys(data.Resources)
+            .filter(k => k.includes('LambdaVersion'));
+        keys.forEach(item => {
+          const version = data.Resources[item].Properties;
+          console.log(version.FunctionName.Ref, version.CodeSha256);
+        });
+      }
+    });
+  }
+
 
 
   async packageFinalize() {
@@ -57,8 +80,6 @@ class EsmLayer {
   }
 
   async zip(filename) {
-    // The zip-lib is not generating the zip with symlink.
-    // issue https://github.com/fpsqdb/zip-lib/issues/7
     const output = fs.createWriteStream(`./.serverless/${filename}`);
     const archive = archiver('zip', {
       zlib: { level: 9 }
@@ -67,7 +88,6 @@ class EsmLayer {
     archive.glob('**/*',
       {
           cwd: this.fullPath(filename),
-          encoding: 'CodeSHA256',
           root: false,
           nodir: false,
           nosort: false,
@@ -76,7 +96,22 @@ class EsmLayer {
       }
     );
     await archive.finalize();
+    await this.getCodeSha256(filename);
   }
+
+  async getCodeSha256(filename) {
+    const filePath = `./.serverless/${filename}`;
+    const shasum = crypto.createHash('sha256');
+    await fs.createReadStream(filePath)
+    .on('data', (chunk) => {
+        shasum.update(chunk);
+    })
+    .on('end', () => {
+        const sha256 = shasum.digest('base64');
+        console.log(filename, '<->', sha256);
+    });
+  }
+
 
   async deleteDirTemp() {
     return fs.promises.rm(this.tmpDir, { recursive: true, force: true });
