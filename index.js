@@ -16,39 +16,10 @@ class EsmLayer {
 
     this.hooks = {
       'after:package:createDeploymentArtifacts': async () => {
-        console.log('after:package:createDeploymentArtifacts > start');
         await this.packageFinalize();
-        console.log('after:package:createDeploymentArtifacts > finish');
-      },
-      'after:package:finalize': async () => {
-        console.log('after:package:finalize > start');
-        await this.listJSON();
-        console.log('after:package:finalize > finish');
       },
     };
   }
-  async listJSON() {
-    const dirPath = path.relative('./', '.serverless');
-    const files = await fs.promises.readdir(dirPath);
-    const jsonFiles = files.filter(el => path.extname(el) === '.json');
-
-    jsonFiles.forEach(async filename => {
-      const rawdata = fs.readFileSync(`./.serverless/${filename}`);
-      const data = JSON.parse(rawdata);
-      if('Resources' in data) {
-        // const lambdasVersion = data.Resources.filter(item => item.Type === 'AWS::Lambda::Version');
-        const keys = Object
-            .keys(data.Resources)
-            .filter(k => k.includes('LambdaVersion'));
-        keys.forEach(item => {
-          const version = data.Resources[item].Properties;
-          console.log(version.FunctionName.Ref, version.CodeSha256);
-        });
-      }
-    });
-  }
-
-
 
   async packageFinalize() {
     this.serverless.cli.log('Making adjustments to work the layer with esm (.mjs)');
@@ -64,7 +35,6 @@ class EsmLayer {
         await this.unzip(fileName);
         await this.symlink(fileName);
         await this.zip(fileName);
-        await this.getCodeSha256(fileName);
       } catch(error) {
         this.serverless.cli.log(`layer with esm - error: ${error}`);
       }
@@ -103,22 +73,6 @@ class EsmLayer {
       }
     );
     await archive.finalize();
-  }
-
-  async getCodeSha256(filename) {
-    const filePath = `./.serverless/${filename}`;
-    const shasum = crypto.createHash('sha256');
-    return new Promise((resolve) => {
-      fs.createReadStream(filePath)
-        .on('data', (chunk) => {
-            shasum.update(chunk);
-        })
-        .on('end', () => {
-            const sha256 = shasum.digest('base64');
-            console.log(filename, '<->', sha256);
-            resolve();
-        });
-    });
   }
 
 
