@@ -15,8 +15,8 @@ class EsmLayer {
     this.serverless = serverless;
 
     this.hooks = {
-      'after:package:createDeploymentArtifacts':  () => this.packageFinalize(),
-      'after:package:finalize':  () => this.listJSON(),
+      'after:package:createDeploymentArtifacts': async () => await this.packageFinalize(),
+      'after:package:finalize':  async () => await this.listJSON(),
     };
   }
   async listJSON() {
