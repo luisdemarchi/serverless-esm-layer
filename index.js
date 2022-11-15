@@ -4,15 +4,15 @@
 const os = require('os');
 const fs = require('fs');
 const path = require('path');
-const crypto = require('crypto');
 
 const zl = require('zip-lib');
 const lnk = require('lnk');
 const archiver = require('archiver');
 
 class EsmLayer {
-  constructor(serverless) {
+  constructor(serverless, cliOptions, { log }) {
     this.serverless = serverless;
+    this.log = log;
 
     this.hooks = {
       'after:package:createDeploymentArtifacts': async () => {
@@ -22,7 +22,7 @@ class EsmLayer {
   }
 
   async packageFinalize() {
-    this.serverless.cli.log('Making adjustments to work the layer with esm (.mjs)');
+    this.log.info('serverless-esm-layer: started');
     const dirPath = path.relative('./', '.serverless');
     const files = await fs.promises.readdir(dirPath);
     const zipFiles = files.filter(el => path.extname(el) === '.zip');
@@ -30,15 +30,19 @@ class EsmLayer {
     await fs.promises.mkdtemp(path.join(os.tmpdir(), tempName));
     this.tmpDir = path.join(os.tmpdir(), tempName);
 
-    for await (const fileName of zipFiles) {
-      try {
-        await this.unzip(fileName);
-        await this.symlink(fileName);
-        await this.zip(fileName);
-      } catch(error) {
-        this.serverless.cli.log(`layer with esm - error: ${error}`);
-      }
-    }
+    await Promise.all(
+      zipFiles.map(async (fileName) => {
+        try {
+          this.log.info(`serverless-esm-layer: editing the file ${fileName}`);
+          await this.unzip(fileName);
+          await this.symlink(fileName);
+          return this.zip(fileName);
+        } catch(error) {
+          this.serverless.classes.Error(`serverless-esm-layer - error: ${error}`);
+        }
+      })
+    );
+    this.log.info('serverless-esm-layer: finished');
   }
 
   fullPath(filename) {
