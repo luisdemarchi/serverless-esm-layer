@@ -18,6 +18,9 @@ class EsmLayer {
       'after:package:createDeploymentArtifacts': async () => {
         await this.packageFinalize();
       },
+      'after:deploy:function:packageFunction': async () => {
+        await this.packageFinalize();
+      }
     };
   }
 
@@ -76,7 +79,11 @@ class EsmLayer {
           follow: false
       }
     );
+    const onStreamFinished = new Promise((resolve) => {
+      output.on('finish', resolve);
+    });
     await archive.finalize();
+    await onStreamFinished;
   }
 
 
